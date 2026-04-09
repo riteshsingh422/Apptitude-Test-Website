@@ -172,11 +172,11 @@ export default function Test() {
         {/* Question */}
         <div className="bg-slate-900/80 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-10 shadow-2xl">
           <h2 className="text-2xl leading-relaxed text-white mb-10">
-            {currentQ.question}
+            {currentQ?.question}
           </h2>
 
           <div className="grid gap-4">
-            {currentQ.options.map((opt, idx) => (
+            {currentQ?.options?.map((opt, idx) => (
               <button
                 key={idx}
                 onClick={() => selectOption(idx)}

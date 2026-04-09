@@ -21,17 +21,29 @@ exports.startTest = async (req, res) => {
     });
   }
 
-  const allQuestions = await Question.find();
-  const shuffled = allQuestions.sort(() => 0.5 - Math.random());
-  const selected = shuffled.slice(0, 20).map(q => ({
-    qId: q._id.toString(),
-    question: q.question,
-    options: q.options
-  }));
+  // 🔥 NEW LOGIC (ONLY CHANGE)
+  const allStudents = await Student.find().sort({ code: 1 }).lean();
+  const studentIndex = allStudents.findIndex(s => s.code === code);
+
+  const aptitudeQuestions = await Question.find({ category: 'aptitude' }).lean();
+  const reasoningQuestions = await Question.find({ category: 'reasoning' }).lean();
+  const codingQuestions = await Question.find({ category: 'coding' }).lean();
+
+  const aptitudeChunk = aptitudeQuestions.slice(studentIndex * 10, (studentIndex + 1) * 10);
+  const reasoningChunk = reasoningQuestions.slice(studentIndex * 10, (studentIndex + 1) * 10);
+  const codingChunk = codingQuestions.slice(studentIndex * 10, (studentIndex + 1) * 10);
+
+  const selected = [...aptitudeChunk, ...reasoningChunk, ...codingChunk]
+    .map(q => ({
+      qId: q._id.toString(),
+      question: q.question,
+      options: q.options
+    }))
+    .sort(() => 0.5 - Math.random());
 
   session = new TestSession({
     studentCode: code,
-    questions: selected,
+    questions: selected, // now 30 questions
     status: 'in_progress',
     remainingTime: 1800,
     currentIndex: 0,
@@ -99,7 +111,7 @@ exports.submitTest = async (req, res) => {
     const scorePercentage = Math.round((correctCount / session.questions.length) * 100);
 
     session.status = 'completed';
-    session.score = scorePercentage; // FIXED: Now persists to DB
+    session.score = scorePercentage;
     session.lastUpdated = new Date();
     await session.save();
 
